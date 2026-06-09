@@ -72,6 +72,40 @@ reports/newman-lab04-local.html
 
 ---
 
+## Notification service (team-notify)
+
+Build image for Notification service:
+
+```bash
+docker build -f Dockerfile.notification -t fit4110/notification:lab04 .
+```
+
+Run notification container:
+
+```bash
+docker run --rm \
+  --name fit4110-notify-lab04 \
+  -p 8002:8002 \
+  --env-file .env.notification.example \
+  fit4110/notification:lab04
+```
+
+Kiểm tra health:
+
+```bash
+curl http://localhost:8002/health
+```
+
+Chạy Newman tests cho Notification (local):
+
+```bash
+npm run test:notify-local
+```
+
+Reports sinh tại `reports/newman-notify-lab04-local.xml` và `reports/newman-notify-lab04-local.html`.
+
+---
+
 ## 6. Dừng container
 
 Nếu không dùng `--rm` hoặc container còn chạy:

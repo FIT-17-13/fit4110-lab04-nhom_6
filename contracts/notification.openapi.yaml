@@ -1,0 +1,400 @@
+openapi: 3.1.0
+info:
+  title: Smart Campus - Notification API
+  version: 0.3.0
+  description: |
+    Contract mock used in FIT4110 Lab 03 for Notification service.
+    Use this file to generate mock server and contract tests.
+servers:
+  - url: http://localhost:4020
+    description: Prism mock server
+  - url: http://localhost:8002
+    description: Local development server
+tags:
+  - name: notifications
+    description: Notification delivery
+  - name: system
+    description: Health and runtime information
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      tags: [system]
+      operationId: getNotificationHealth
+      summary: Check service health
+      description: Public health check for mock/local service.
+      security: []
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              examples:
+                ok:
+                  value:
+                    status: ok
+                    service: notification
+                    version: 0.3.0
+
+  /notifications:
+    post:
+      tags: [notifications]
+      operationId: createNotification
+      summary: Create a notification request
+      description: Create and queue a notification for delivery.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationCreate"
+            examples:
+              valid_email:
+                value:
+                  alert_id: ALERT-20260513-001
+                  channel: email
+                  recipient: ops@smart-campus.local
+                  subject: High temperature alert
+                  message: Temperature exceeded 80C at Lab A01
+      responses:
+        "201":
+          description: Notification queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationCreated"
+              examples:
+                queued:
+                  value:
+                    notification_id: N-20260513-0001
+                    alert_id: ALERT-20260513-001
+                    status: queued
+                    created_at: "2026-05-13T08:35:10+07:00"
+        "400":
+          description: Invalid payload
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                missing_recipient:
+                  value:
+                    type: https://smart-campus.local/problems/validation-error
+                    title: Validation error
+                    status: 400
+                    detail: recipient is required
+                    instance: /notifications
+                invalid_channel:
+                  value:
+                    type: https://smart-campus.local/problems/validation-error
+                    title: Validation error
+                    status: 400
+                    detail: channel must be one of [email, sms, push, webhook]
+                    instance: /notifications
+        "401":
+          description: Missing or invalid token
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                unauthorized:
+                  value:
+                    type: https://smart-campus.local/problems/unauthorized
+                    title: Unauthorized
+                    status: 401
+                    detail: Missing or invalid bearer token
+                    instance: /notifications
+        "409":
+          description: Duplicate alert notification
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                duplicate_alert:
+                  value:
+                    type: https://smart-campus.local/problems/duplicate-alert
+                    title: Duplicate alert
+                    status: 409
+                    detail: notification already exists for alert_id
+                    instance: /notifications
+    get:
+      tags: [notifications]
+      operationId: listNotifications
+      summary: List notifications
+      description: Retrieve recent notifications with optional filters.
+      parameters:
+        - in: query
+          name: status
+          required: false
+          schema:
+            $ref: "#/components/schemas/NotificationStatus"
+          example: queued
+        - in: query
+          name: limit
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          example: 10
+      responses:
+        "200":
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+              examples:
+                list:
+                  value:
+                    items:
+                      - notification_id: N-20260513-0001
+                        alert_id: ALERT-20260513-001
+                        status: queued
+                        created_at: "2026-05-13T08:35:10+07:00"
+                      - notification_id: N-20260513-0002
+                        alert_id: ALERT-20260513-002
+                        status: sent
+                        created_at: "2026-05-13T08:36:00+07:00"
+                    total: 2
+        "400":
+          description: Invalid query
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                invalid_limit:
+                  value:
+                    type: https://smart-campus.local/problems/validation-error
+                    title: Validation error
+                    status: 400
+                    detail: limit must be between 1 and 100
+                    instance: /notifications
+        "401":
+          description: Missing or invalid token
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                unauthorized:
+                  value:
+                    type: https://smart-campus.local/problems/unauthorized
+                    title: Unauthorized
+                    status: 401
+                    detail: Missing or invalid bearer token
+                    instance: /notifications
+
+  /notifications/{notification_id}:
+    get:
+      tags: [notifications]
+      operationId: getNotificationById
+      summary: Get notification detail
+      parameters:
+        - in: path
+          name: notification_id
+          required: true
+          schema:
+            type: string
+          example: N-20260513-0001
+      responses:
+        "200":
+          description: Notification detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationDetail"
+              examples:
+                detail:
+                  value:
+                    notification_id: N-20260513-0001
+                    alert_id: ALERT-20260513-001
+                    status: queued
+                    channel: email
+                    recipient: ops@smart-campus.local
+                    subject: High temperature alert
+                    message: Temperature exceeded 80C at Lab A01
+                    attempts: 1
+                    created_at: "2026-05-13T08:35:10+07:00"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                unauthorized:
+                  value:
+                    type: https://smart-campus.local/problems/unauthorized
+                    title: Unauthorized
+                    status: 401
+                    detail: Missing or invalid bearer token
+                    instance: /notifications/{notification_id}
+        "404":
+          description: Notification not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                not_found:
+                  value:
+                    type: https://smart-campus.local/problems/not-found
+                    title: Not Found
+                    status: 404
+                    detail: notification_id not found
+                    instance: /notifications/{notification_id}
+
+  /notifications/{notification_id}/retry:
+    post:
+      tags: [notifications]
+      operationId: retryNotification
+      summary: Retry a failed notification
+      parameters:
+        - in: path
+          name: notification_id
+          required: true
+          schema:
+            type: string
+          example: N-20260513-0001
+      responses:
+        "202":
+          description: Retry accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationRetryResponse"
+              examples:
+                retried:
+                  value:
+                    notification_id: N-20260513-0001
+                    status: queued
+                    retried_at: "2026-05-13T08:40:00+07:00"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                unauthorized:
+                  value:
+                    type: https://smart-campus.local/problems/unauthorized
+                    title: Unauthorized
+                    status: 401
+                    detail: Missing or invalid bearer token
+                    instance: /notifications/{notification_id}/retry
+        "404":
+          description: Notification not found
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetails"
+              examples:
+                not_found:
+                  value:
+                    type: https://smart-campus.local/problems/not-found
+                    title: Not Found
+                    status: 404
+                    detail: notification_id not found
+                    instance: /notifications/{notification_id}/retry
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    NotificationChannel:
+      type: string
+      enum: [email, sms, push, webhook]
+
+    NotificationStatus:
+      type: string
+      enum: [queued, sent, failed]
+
+    NotificationCreate:
+      type: object
+      required: [alert_id, channel, recipient, message]
+      properties:
+        alert_id:
+          type: string
+          minLength: 3
+          example: ALERT-20260513-001
+        channel:
+          $ref: "#/components/schemas/NotificationChannel"
+        recipient:
+          type: string
+          minLength: 3
+          example: ops@smart-campus.local
+        subject:
+          type: string
+          maxLength: 120
+          example: High temperature alert
+        message:
+          type: string
+          maxLength: 500
+          example: Temperature exceeded 80C at Lab A01
+        metadata:
+          type: object
+          additionalProperties: true
+
+    NotificationCreated:
+      type: object
+      required: [notification_id, alert_id, status, created_at]
+      properties:
+        notification_id:
+          type: string
+          example: N-20260513-0001
+        alert_id:
+          type: string
+          example: ALERT-20260513-001
+        status:
+          $ref: "#/components/schemas/NotificationStatus"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-05-13T08:35:10+07:00"
+
+    NotificationSummary:
+      type: object
+      required: [notification_id, alert_id, status, created_at]
+      properties:
+        notification_id:
+          type: string
+          example: N-20260513-0001
+        alert_id:
+          type: string
+          example: ALERT-20260513-001
+        status:
+          $ref: "#/components/schemas/NotificationStatus"
+        created_at:
+          type: string
+          format: date-time
+          example: "2026-05-13T08:35:10+07:00"
+
+    NotificationDetail:
+      allOf:
+        - $ref: "#/components/schemas/NotificationSummary"
+        - type: object
+          required: [channel, recipient, message, attempts]
+          properties:
+            channel:
+              $ref: "#/components/schemas/NotificationChannel"
+            recipient:
+              type: string
+              example: ops@smart-campus.local
+            subject:
+              type: string
+              example: High temperature alert
+            message:
+              type: string

@@ -1,0 +1,3 @@
+ghcr.io/quang2005asd/team-notify:v0.1.0-team-notify
+
+digest: sha256:ed3c8de64368db1b76ccebe8f3495ea93840ac77d05d79db4f2c4f5ccd540458

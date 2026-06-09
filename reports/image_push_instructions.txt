@@ -1,0 +1,18 @@
+Image tag created locally:
+- fit4110/notification:lab04
+- fit4110/notification:v0.1.0-team-notify
+
+To push to GitHub Container Registry (example):
+1. Authenticate (login):
+   echo $CR_PAT | docker login ghcr.io -u <github-username> --password-stdin
+2. Tag for ghcr:
+   docker tag fit4110/notification:v0.1.0-team-notify ghcr.io/<owner>/team-notify:v0.1.0-team-notify
+3. Push:
+   docker push ghcr.io/<owner>/team-notify:v0.1.0-team-notify
+
+To push to Docker Hub (example):
+1. docker login
+2. docker tag fit4110/notification:v0.1.0-team-notify <dockerhub-username>/team-notify:v0.1.0-team-notify
+3. docker push <dockerhub-username>/team-notify:v0.1.0-team-notify
+
+Note: I did not push the image (no registry credentials). If you want, provide credentials and I can push for you.

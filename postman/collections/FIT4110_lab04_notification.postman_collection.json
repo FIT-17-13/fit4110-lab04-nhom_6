@@ -1,0 +1,55 @@
+{
+  "info": {
+    "name": "FIT4110 Lab04 - Notification Minimal",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "GET /health",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/health"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST /notifications - happy",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" }],
+        "body": { "mode": "raw", "raw": "{\n  \"alert_id\": \"ALERT-1\",\n  \"channel\": \"email\",\n  \"recipient\": \"ops@local\",\n  \"message\": \"Test\"\n}" },
+        "url": "{{baseUrl}}/notifications"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "exec": ["pm.test('created or conflict', () => pm.expect([201,409]).to.include(pm.response.code));"] }
+        }
+      ]
+    },
+    {
+      "name": "POST /notifications - missing recipient (negative)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{authToken}}" }],
+        "body": { "mode": "raw", "raw": "{\n  \"alert_id\": \"ALERT-NEG\",\n  \"channel\": \"sms\",\n  \"message\": \"Missing recipient\"\n}" },
+        "url": "{{baseUrl}}/notifications"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": { "exec": ["pm.test('client error', () => pm.expect([400,422]).to.include(pm.response.code));"] }
+        }
+      ]
+    }
+  ]
+}
